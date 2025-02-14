@@ -4,25 +4,50 @@ import com.plmph.pde.PdeFieldTypes;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PdeObjectWriterImpl<T> implements PdeObjectWriter<T> {
 
     private Class<T> targetClass = null;
-    private List<PdeObjectFieldWriter> fieldWriters = new ArrayList<>();
+    private final List<PdeObjectFieldWriter> fieldWriters = new ArrayList<>();
 
     public PdeObjectWriterImpl(Class<T> targetClass) {
         this.targetClass = targetClass;
+        addFields();
     }
 
-    public void addFieldWriter(String fieldName) throws NoSuchFieldException {
+    private void addFields() {
+        List<Field> allFields = Arrays.asList(targetClass.getDeclaredFields());
+
+        allFields.forEach(field -> {
+            try {
+                addFieldWriter(field.getName());
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void addFieldWriter(String fieldName) throws NoSuchFieldException {
         Field field = this.targetClass.getField(fieldName);
 
         Class fieldType = field.getType();
-        if(fieldType.equals(Boolean.class)){ this.fieldWriters.add(new PdeBooleanObjFieldWriter(field)); return; }
-        if(fieldType.equals(Integer.class)){ this.fieldWriters.add(new PdeIntObjFieldWriter(field)); return; }
-        if(fieldType.equals(Float.class))  { this.fieldWriters.add(new PdeFloatObjFieldWriter(field)); return; }
-        if(fieldType.equals(String.class)) { this.fieldWriters.add(new PdeUtf8ObjFieldWriter(field)); return; }
+        if (fieldType.equals(Boolean.class)) {
+            this.fieldWriters.add(new PdeBooleanObjFieldWriter(field));
+            return;
+        }
+        if (fieldType.equals(Integer.class)) {
+            this.fieldWriters.add(new PdeIntObjFieldWriter(field));
+            return;
+        }
+        if (fieldType.equals(Float.class)) {
+            this.fieldWriters.add(new PdeFloatObjFieldWriter(field));
+            return;
+        }
+        if (fieldType.equals(String.class)) {
+            this.fieldWriters.add(new PdeUtf8ObjFieldWriter(field));
+        }
 
     }
 
@@ -32,7 +57,7 @@ public class PdeObjectWriterImpl<T> implements PdeObjectWriter<T> {
         int lengthByteOffset = offset;
         offset += lengthByteCount; //reserve the length bytes before starting to write object fields.
 
-        for(int i=0; i<this.fieldWriters.size(); i++){
+        for (int i = 0; i < this.fieldWriters.size(); i++) {
             offset += fieldWriters.get(i).writeKeyAndValue(dest, offset, object);
         }
 
@@ -43,5 +68,4 @@ public class PdeObjectWriterImpl<T> implements PdeObjectWriter<T> {
 
         return 1 + lengthByteCount + bodyLength;
     }
-
 }
