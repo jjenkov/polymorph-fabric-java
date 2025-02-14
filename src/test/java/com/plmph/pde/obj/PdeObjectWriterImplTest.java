@@ -1,17 +1,19 @@
 package com.plmph.pde.obj;
 
+import com.plmph.pde.PdeFieldTypes;
+import com.plmph.pde.util.TestConstants;
 import org.junit.jupiter.api.Test;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PdeObjectWriterImplTest {
 
     @Test
     public void test() throws NoSuchFieldException, IllegalAccessException {
         PdeObjectWriterImpl pdeObjectWriter = new PdeObjectWriterImpl(Pojo1.class);
-        pdeObjectWriter.addFieldWriter("isValid");
-        pdeObjectWriter.addFieldWriter("integerFieldWithLongName");
-        pdeObjectWriter.addFieldWriter("floatField");
-        pdeObjectWriter.addFieldWriter("stringField1");
-        pdeObjectWriter.addFieldWriter("stringField2");
 
         byte[] dest = new byte[1024];
 
@@ -19,8 +21,9 @@ public class PdeObjectWriterImplTest {
 
         int bytesWritten = pdeObjectWriter.writeKeysAndValues(dest, 0, pojo, 1);
 
-        System.out.println(bytesWritten);
+        String str = new String(Arrays.copyOfRange(dest, 0, bytesWritten), StandardCharsets.US_ASCII);
 
-
+        assertEquals(TestConstants.pojo1AsASCIIString, str);
+        assertEquals(TestConstants.pojo1AsASCIIString.length(), bytesWritten);
     }
 }
